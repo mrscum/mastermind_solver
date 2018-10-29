@@ -81,37 +81,39 @@ def verdict(guess, solution):
     return [black, white]
 
 def assess_turn(guess, verdict, pool):
-    pool.remove(guess)
+    pool.remove(''.join(guess))
 
     if verdict[0] == len(guess):     # [4, 0]
         print("You Win!")
         sys.exit(0)
 
-    elif sum(verdict) == 0:         # [0, 0]     guess: [ABCD]; soln: [EFGH]
-        for colour in guess:                        # for each colour in the guess
-            for choice in pool:                     # then for each choice in the possible pool
-                if colour in choice:                # if the colour exists in that choice
-                    pool.remove(choice)             # then remove that choice from the pool
+    elif sum(verdict) == 0:          # [0, 0]
+        for colour in guess:
+            for n, choice in enumerate(pool):
+                if colour in choice:               
+                    pool[n] = ''
+    
+    
+    # elif verdict[0] > 0 and verdict[1] == 0:
 
-    elif verdict[0] > 0 and verdict[1] == 0
+    # elif sum(verdict) == len(guess): # [0, 4], [1, 3], [2, 2]
 
-    elif sum(verdict) == len(guess): # [0, 4], [1, 3], [2, 2]
+    # elif verdict[0] == 0 and verdict[1] > 0:     # [0, 1], [0, 2], [0, 3]
 
-    elif verdict[0] == 0 and verdict[1] > 0     # [0, 1], [0, 2], [0, 3]
+    # else:                                    # [1, 0], [1, 1], [1, 2], [2, 0], [2, 1], [3, 0] 
 
-    else                                        # [1, 0], [1, 1], [1, 2], [2, 0], [2, 1], [3, 0] 
-
-    return pool
+    return list(filter(None, pool))
 
 if repeats:
     pool = create_pool_with_repeats(colours, length)
-    solution = random_product(COLOURS[:colours], repeat=length)
+#     solution = random_product(COLOURS[:colours], repeat=length)
 else:
     pool = create_pool_no_repeats(colours, length)
-    solution = random_permutation(COLOURS[:colours], length)
+#     solution = random_permutation(COLOURS[:colours], length)
 
+solution = ('A','B','C','D') 
 # guess = random_guess(colours, length, repeats)
-guess = ('A','A','A','A')
+guess = ('E','F','E','F')
 
 print("Solution (with {}repeats):".format("" if repeats else "no "))
 print(solution)
@@ -124,3 +126,5 @@ print("Verdict: {}".format(result))
 
 new_pool = assess_turn(guess, result, pool)
 print("Total in new pool: {}".format(len(new_pool)))
+
+# print(new_pool)
