@@ -2,6 +2,7 @@ import itertools
 import random
 import optparse
 import sys
+from collections import defaultdict
 
 COLOURS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
@@ -75,25 +76,38 @@ def intersect(t1, t2):
             found += 1
     return found
 
-def verdict(guess, solution):
+def verdict(turn, guess, solution):
     black = match(guess, solution)
     white = intersect(guess, solution) - black
+    verdict = [black, white]
+
+    verdict_history[turn] = verdict
+    return verdict
+
+def verdict_hist_compare(turn_x, turn_y):
+    black = verdict_history[turn_y][0] - verdict_history[turn_x][0]
+    white = verdict_history[turn_y][1] - verdict_history[turn_x][1]
     return [black, white]
 
 def assess_turn(guess, verdict, pool):
     pool.remove(''.join(guess))
 
-    if verdict[0] == len(guess):     # [4, 0]
+    if verdict[0] == len(guess):    # [4, 0]
         print("You Win!")
         sys.exit(0)
 
-    elif sum(verdict) == 0:          # [0, 0]
+    elif sum(verdict) == 0:         # [0, 0]
         for colour in guess:
             for n, choice in enumerate(pool):
                 if colour in choice:               
                     pool[n] = ''
     
-    
+    elif verdict[0] > 0 and verdict[1] == 0:           # [n, 0]
+        for colour in guess:
+            for n, choice in enumerate(pool):
+                if choice.count(colour) != verdict[0]:
+                    pool[n] = ''
+
     # elif verdict[0] > 0 and verdict[1] == 0:
 
     # elif sum(verdict) == len(guess): # [0, 4], [1, 3], [2, 2]
@@ -111,9 +125,12 @@ else:
     pool = create_pool_no_repeats(colours, length)
 #     solution = random_permutation(COLOURS[:colours], length)
 
+verdict_history = defaultdict(list)
+verdict_history[0] = [0, 0]
+
 solution = ('A','B','C','D') 
 # guess = random_guess(colours, length, repeats)
-guess = ('E','F','E','F')
+guess = ('A','A','A','A')
 
 print("Solution (with {}repeats):".format("" if repeats else "no "))
 print(solution)
@@ -121,10 +138,12 @@ print("Total in pool: {}".format(len(pool)))
 
 print("First guess: {}".format(guess))
 
-result = verdict(guess, solution)
+result = verdict(1, guess, solution)
 print("Verdict: {}".format(result))
 
-new_pool = assess_turn(guess, result, pool)
-print("Total in new pool: {}".format(len(new_pool)))
+print(verdict_history.items())
+verdict_compare = verdict_hist_compare(0, 1)
+print(verdict_compare)
 
-# print(new_pool)
+new_pool = assess_turn(guess, verdict_compare, pool)
+print("Total in new pool: {}".format(len(new_pool)))
