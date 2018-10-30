@@ -84,12 +84,15 @@ def verdict(turn, guess, solution):
     verdict_history[turn] = verdict
     return verdict
 
-def verdict_hist_compare(turn_x, turn_y):
-    black = verdict_history[turn_y][0] - verdict_history[turn_x][0]
-    white = verdict_history[turn_y][1] - verdict_history[turn_x][1]
-    return [black, white]
+def verdict_compare(turn_x, turn_y):
+    verdict_comparison = {
+        "black" : verdict_history[turn_y][0] - verdict_history[turn_x][0],
+        "white" : verdict_history[turn_y][1] - verdict_history[turn_x][1],
+        "count" : sum(verdict_history[turn_y]) - sum(verdict_history[turn_x])
+    }
+    return verdict_comparison
 
-def assess_turn(guess, verdict, pool):
+def assess_turn(guess, new_colour, verdict, verdict_compare, pool):
     pool.remove(''.join(guess))
 
     if verdict[0] == len(guess):    # [4, 0]
@@ -107,7 +110,7 @@ def assess_turn(guess, verdict, pool):
             for n, choice in enumerate(pool):
                 if choice.count(colour) != verdict[0]:
                     pool[n] = ''
-
+        
     # elif verdict[0] > 0 and verdict[1] == 0:
 
     # elif sum(verdict) == len(guess): # [0, 4], [1, 3], [2, 2]
@@ -116,7 +119,25 @@ def assess_turn(guess, verdict, pool):
 
     # else:                                    # [1, 0], [1, 1], [1, 2], [2, 0], [2, 1], [3, 0] 
 
+    else: 
+        print("Don't know what to do next...")
+        sys.exit(1)
+    
     return list(filter(None, pool))
+
+def attempt_guess(turn, new_colour, guess, solution, pool):
+    # print("Turn {} guess: {}".format(turn, guess))
+
+    result = verdict(turn, guess, solution)
+    print("Verdict: {}".format(result))
+
+    print(verdict_history.items())
+    comparison = verdict_compare(turn-1, turn)
+    print("Verdict comparison: {}".format(comparison))
+
+    new_pool = assess_turn(guess, new_colour, result, comparison, pool)
+    print("Total in new pool: {}".format(len(new_pool)))
+    return new_pool
 
 if repeats:
     pool = create_pool_with_repeats(colours, length)
@@ -127,23 +148,20 @@ else:
 
 verdict_history = defaultdict(list)
 verdict_history[0] = [0, 0]
+turn = 1
 
-solution = ('A','B','C','D') 
+solution = ('D','D','D','B') 
 # guess = random_guess(colours, length, repeats)
-guess = ('A','A','A','A')
+guess = tuple(pool[0])
 
 print("Solution (with {}repeats):".format("" if repeats else "no "))
 print(solution)
 print("Total in pool: {}".format(len(pool)))
 
-print("First guess: {}".format(guess))
-
-result = verdict(1, guess, solution)
-print("Verdict: {}".format(result))
-
-print(verdict_history.items())
-verdict_compare = verdict_hist_compare(0, 1)
-print(verdict_compare)
-
-new_pool = assess_turn(guess, verdict_compare, pool)
-print("Total in new pool: {}".format(len(new_pool)))
+print("Turn {} guess: {}".format(turn, guess))
+pool = attempt_guess(turn, COLOURS[turn], guess, solution, pool)
+while turn < 5:
+    turn+=1
+    guess = tuple(pool[0])
+    print("Turn {} guess: {}".format(turn, guess))
+    pool = attempt_guess(turn, COLOURS[turn], guess, solution, pool)
