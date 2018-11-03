@@ -113,9 +113,13 @@ def assess_turn(guess, new_colour, verdict, verdict_compare, pool):
         
     # elif verdict[0] > 0 and verdict[1] == 0:
 
-    # elif sum(verdict) == len(guess): # [0, 4], [1, 3], [2, 2]
+    # elif sum(verdict) == len(guess): # [1, 3], [2, 2]
 
-    # elif verdict[0] == 0 and verdict[1] > 0:     # [0, 1], [0, 2], [0, 3]
+    elif verdict[1] == len(guess):     # [0, 4]
+        for i, colour in enumerate(guess):      
+            for j, choice in enumerate(pool):   
+                if pool[j] and guess[i] == choice[i]:                
+                    pool[j] = ''
 
     # else:                                    # [1, 0], [1, 1], [1, 2], [2, 0], [2, 1], [3, 0] 
 
@@ -150,7 +154,8 @@ verdict_history = defaultdict(list)
 verdict_history[0] = [0, 0]
 turn = 1
 
-solution = ('D','D','D','B') 
+solution = ('A','B','C','D') 
+# guess = ('D','C','B','A') 
 # guess = random_guess(colours, length, repeats)
 guess = tuple(pool[0])
 
