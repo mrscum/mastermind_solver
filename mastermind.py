@@ -2,6 +2,7 @@ import itertools
 import random
 import optparse
 import sys
+import re
 from collections import defaultdict
 
 COLOURS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -95,6 +96,12 @@ def verdict_compare(turn_x, turn_y):
 def assess_turn(guess, new_colour, verdict, verdict_compare, pool):
     pool.remove(''.join(guess))
 
+    for colour in guess:            # remove solutions where new colour count doesn't match
+        if colour in new_colour:
+            for n, choice in enumerate(pool):
+                if choice.count(colour) != verdict_compare['count']:
+                    pool[n] = ''
+
     if verdict[0] == len(guess):    # [4, 0]
         print("You Win!")
         sys.exit(0)
@@ -105,28 +112,43 @@ def assess_turn(guess, new_colour, verdict, verdict_compare, pool):
                 if colour in choice:               
                     pool[n] = ''
     
-    elif verdict[0] > 0 and verdict[1] == 0:           # [n, 0]
-        for colour in guess:
-            for n, choice in enumerate(pool):
-                if choice.count(colour) != verdict[0]:
-                    pool[n] = ''
-        
-    # elif verdict[0] > 0 and verdict[1] == 0:
+    # elif verdict[0] == sum(verdict):           # [i, 0]
+    #     for colour in guess:
+    #         for n, choice in enumerate(pool):
+    #             if choice.count(colour) != verdict[0]:
+    #                 pool[n] = ''
 
-    # elif sum(verdict) == len(guess): # [1, 3], [2, 2]
-
-    elif verdict[1] == len(guess):     # [0, 4]
+    elif verdict[1] == sum(verdict):          # [0, i]
         for i, colour in enumerate(guess):      
             for j, choice in enumerate(pool):   
                 if pool[j] and guess[i] == choice[i]:                
                     pool[j] = ''
 
-    # else:                                    # [1, 0], [1, 1], [1, 2], [2, 0], [2, 1], [3, 0] 
+    elif sum(verdict) == len(guess):        # [1, 3], [2, 2]
+        pool = list(set(list(map("".join, itertools.permutations(guess, len(guess))))).intersection(pool))
 
-    else: 
-        print("Don't know what to do next...")
-        sys.exit(1)
+    if verdict_compare['black'] < 0:            # If the number of blacks has decreased
+        template = "." * len(guess)
+        slots_with_colour = [i for i, colour in enumerate(guess) if colour == guess[0]]
+        for i in slots_with_colour:
+            template = template[:i] + guess[0] + template[i + 1:]
+        r = re.compile(template)
+        newlist = list(filter(r.match, pool))
+        for j, choice in enumerate(pool):   
+            if pool[j] in newlist:                
+                pool[j] = ''
     
+    # if black, white == black, white from previous turn, then remove all solutions with the exact first x colours
+    # where x is the sum of correct colours
+
+    
+    # else:                                    # [1, 1], [1, 2], [2, 1]
+
+    # else: 
+    #     print("Don't know what to do next...")
+    #     print("Total remaining in pool: {}".format(sum(x is not '' for x in pool)))
+    #     sys.exit(1)
+
     return list(filter(None, pool))
 
 def attempt_guess(turn, new_colour, guess, solution, pool):
@@ -141,21 +163,27 @@ def attempt_guess(turn, new_colour, guess, solution, pool):
 
     new_pool = assess_turn(guess, new_colour, result, comparison, pool)
     print("Total in new pool: {}".format(len(new_pool)))
+
+    if len(new_pool) == 0: 
+        print("Error: No more solutions left in pool")
+        sys.exit(1)
+
+    new_pool.sort()
     return new_pool
 
 if repeats:
     pool = create_pool_with_repeats(colours, length)
-#     solution = random_product(COLOURS[:colours], repeat=length)
+    solution = random_product(COLOURS[:colours], repeat=length)
 else:
     pool = create_pool_no_repeats(colours, length)
-#     solution = random_permutation(COLOURS[:colours], length)
+    solution = random_permutation(COLOURS[:colours], length)
 
 verdict_history = defaultdict(list)
 verdict_history[0] = [0, 0]
 turn = 1
 
-solution = ('A','B','C','D') 
-# guess = ('D','C','B','A') 
+# solution = ('H','A','C','F') 
+# guess = ('E','C','B','A') 
 # guess = random_guess(colours, length, repeats)
 guess = tuple(pool[0])
 
@@ -164,9 +192,9 @@ print(solution)
 print("Total in pool: {}".format(len(pool)))
 
 print("Turn {} guess: {}".format(turn, guess))
-pool = attempt_guess(turn, COLOURS[turn], guess, solution, pool)
-while turn < 5:
+pool = attempt_guess(turn, COLOURS[turn-1], guess, solution, pool)
+while turn < 10:
     turn+=1
     guess = tuple(pool[0])
     print("Turn {} guess: {}".format(turn, guess))
-    pool = attempt_guess(turn, COLOURS[turn], guess, solution, pool)
+    pool = attempt_guess(turn, COLOURS[turn-1], guess, solution, pool)
