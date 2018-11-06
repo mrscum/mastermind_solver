@@ -96,53 +96,120 @@ def verdict_compare(turn_x, turn_y):
 def assess_turn(guess, new_colour, verdict, verdict_compare, pool):
     pool.remove(''.join(guess))
 
+    if verdict[0] == len(guess):    # [4, 0]
+        print("You Win!")
+        sys.exit(0)
+
+    # Rule 1
     for colour in guess:            # remove solutions where new colour count doesn't match
         if colour in new_colour:
             for n, choice in enumerate(pool):
                 if choice.count(colour) != verdict_compare['count']:
                     pool[n] = ''
+    pool_count = pool.count('')
+    print("Rule 1 choices removed: {}".format(pool_count))
 
-    if verdict[0] == len(guess):    # [4, 0]
-        print("You Win!")
-        sys.exit(0)
+    # Rule 2
+    for i, choice in enumerate(pool):
+        count = sum(1 for a, b in zip(''.join(guess), choice) if a != b)
+        if count != (len(guess) - verdict[0]):
+            pool[i] = ''
+    pool_count = pool.count('') - pool_count
+    print("Rule 2 choices removed: {}".format(pool_count))
 
-    elif sum(verdict) == 0:         # [0, 0]
-        for colour in guess:
-            for n, choice in enumerate(pool):
-                if colour in choice:               
-                    pool[n] = ''
-    
-    # elif verdict[0] == sum(verdict):           # [i, 0]
+    # Rule 3
+    # elif sum(verdict) == 0:         # [0, 0]
     #     for colour in guess:
     #         for n, choice in enumerate(pool):
-    #             if choice.count(colour) != verdict[0]:
+    #             if colour in choice:               
     #                 pool[n] = ''
+    #     pool_count = pool.count('') - pool_count
+    #     print("Rule 3 choices removed: {}".format(pool_count))
 
-    elif verdict[1] == sum(verdict):          # [0, i]
-        for i, colour in enumerate(guess):      
-            for j, choice in enumerate(pool):   
-                if pool[j] and guess[i] == choice[i]:                
-                    pool[j] = ''
+    # Rule 4
+    # elif verdict[0] == sum(verdict) and verdict_compare['white'] < 0:           # [i, 0]
+    #     template = ''.join(guess).replace(new_colour, ".")
+    #     r = re.compile(template)
+    #     newlist = list(filter(r.match, pool))
+    #     for j, choice in enumerate(pool):   
+    #         if pool[j] not in newlist:                
+    #             pool[j] = ''
+    #     pool_count = pool.count('') - pool_count
+    #     print("Rule 4 choices removed: {}".format(pool_count))
+        
+        
+    #     # for i, colour in enumerate(guess):
+    #     #     if colour in new_colour:
+    #     #         for j, choice in enumerate(pool):
+    #     #             if pool[j] and guess[i] != choice[i]:  
+    #     #             # if choice.count(colour) != verdict[0]:
+    #     #                 # print("guess[i]: {}; choice[i]: {}".format(guess[i], choice[i]))
+    #     #                 # print("removing: {}".format(choice))
+    #     #                 pool[j] = ''
+    #     # print(turn)
 
-    elif sum(verdict) == len(guess):        # [1, 3], [2, 2]
-        pool = list(set(list(map("".join, itertools.permutations(guess, len(guess))))).intersection(pool))
+    # Rule 5
+    # elif verdict[1] == sum(verdict):          # [0, i]
+    #     for i, colour in enumerate(guess):      
+    #         for j, choice in enumerate(pool):   
+    #             if pool[j] and guess[i] == choice[i]:                
+    #                 pool[j] = ''
+    #     pool_count = pool.count('') - pool_count
+    #     print("Rule 5 choices removed: {}".format(pool_count))
 
-    if verdict_compare['black'] < 0:            # If the number of blacks has decreased
-        template = "." * len(guess)
-        slots_with_colour = [i for i, colour in enumerate(guess) if colour == guess[0]]
-        for i in slots_with_colour:
-            template = template[:i] + guess[0] + template[i + 1:]
-        r = re.compile(template)
-        newlist = list(filter(r.match, pool))
-        for j, choice in enumerate(pool):   
-            if pool[j] in newlist:                
-                pool[j] = ''
+    # Rule 6
+    # elif sum(verdict) == len(guess):        # [1, 3], [2, 2]
+    #     pool = list(set(list(map("".join, itertools.permutations(guess, len(guess))))).intersection(pool))
+    #     for i, choice in enumerate(pool):
+    #         count = sum(1 for a, b in zip(''.join(guess), choice) if a != b)
+    #         if verdict[1] != count:
+    #             pool[i] = ''
+    #     pool_count = pool.count('') - pool_count
+    #     print("Rule 6 choices removed: {}".format(pool_count))
+
+    # Rule 7
+    # if verdict_compare['black'] < 0:            # If the number of blacks has decreased
+    #     template = "." * len(guess)
+    #     slots_with_colour = [i for i, colour in enumerate(guess) if colour == guess[0]]
+    #     for i in slots_with_colour:
+    #         template = template[:i] + guess[0] + template[i + 1:]
+    #     r = re.compile(template)
+    #     newlist = list(filter(r.match, pool))
+    #     for j, choice in enumerate(pool):   
+    #         if pool[j] in newlist:                
+    #             pool[j] = ''
+    #     pool_count = pool.count('') - pool_count
+    #     print("Rule 7 choices removed: {}".format(pool_count))
     
     # if black, white == black, white from previous turn, then remove all solutions with the exact first x colours
     # where x is the sum of correct colours
+    # if verdict_compare['black'] == 0 and verdict_compare['white'] == 0:
+    #     template = "." * len(guess)
+    #     i = 0
+    #     while i < sum(verdict):
+    #         template = template[:i] + guess[i] + template[i + 1:]
+    #         i += 1
+    #     # print("template: {}".format(template))
+    #     r = re.compile(template)
+    #     newlist = list(filter(r.match, pool))
+    #     # print("New List: {}".format(newlist))
+    #     for j, choice in enumerate(pool):   
+    #         if pool[j] in newlist:                
+    #             pool[j] = ''
 
+    # If sum remains the same, there are still 1+ white and sum != len(guess) 
+    # then make a template from the correct colours and remove their exact position from possible solutions
     
-    # else:                                    # [1, 1], [1, 2], [2, 1]
+    # Rule 8
+    # if verdict_compare['count'] == 0 and sum(verdict) != len(guess) and verdict[1] > 0:
+    #     template = ''.join(guess).replace(new_colour, ".")
+    #     r = re.compile(template)
+    #     newlist = list(filter(r.match, pool))
+    #     for j, choice in enumerate(pool):   
+    #         if pool[j] in newlist:                
+    #             pool[j] = ''
+    #     pool_count = pool.count('') - pool_count
+    #     print("Rule 8 choices removed: {}".format(pool_count))
 
     # else: 
     #     print("Don't know what to do next...")
@@ -182,7 +249,7 @@ verdict_history = defaultdict(list)
 verdict_history[0] = [0, 0]
 turn = 1
 
-# solution = ('H','A','C','F') 
+# solution = ('D','F','D','D') 
 # guess = ('E','C','B','A') 
 # guess = random_guess(colours, length, repeats)
 guess = tuple(pool[0])
