@@ -5,7 +5,7 @@ import sys
 import re
 from collections import defaultdict
 
-COLOURS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+COLOURS = 'ABCDEFGHIJKLMNO'
 MAX_TURNS = 12
 
 parser = optparse.OptionParser()
@@ -46,12 +46,10 @@ def create_pool_no_repeats(colours, length):
     return list(map("".join, itertools.permutations(COLOURS[:colours], length)))
 
 def random_product(*args, repeat=4):
-    "Random selection from itertools.product(*args, **kwds)"
     pools = [tuple(pool) for pool in args] * repeat
     return tuple(random.choice(pool) for pool in pools)
 
 def random_permutation(iterable, r=None):
-    "Random selection from itertools.permutations(iterable, r)"
     pool = tuple(iterable)
     r = len(pool) if r is None else r
     return tuple(random.sample(pool, r))
@@ -125,10 +123,7 @@ def attempt_guess(turn, new_colour, guess, solution, pool):
     result = verdict(turn, guess, solution)
     print("Verdict: {}".format(result))
 
-    # print(verdict_history.items())
     comparison = verdict_compare(turn-1, turn)
-    # print("Verdict comparison: {}".format(comparison))
-
     new_pool = assess_turn(guess, new_colour, result, comparison, pool)
     print("Total in new pool: {}".format(len(new_pool)))
 
@@ -150,7 +145,7 @@ verdict_history = defaultdict(list)
 verdict_history[0] = [0, 0]
 turn = 1
 
-solution = ('E','G','E','D','C') 
+# solution = ('E','G','E','D','C') 
 # guess = ('E','C','B','A') 
 # guess = random_guess(colours, length, repeats)
 guess = tuple(pool[0])
